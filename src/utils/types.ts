@@ -13,3 +13,14 @@ export interface TokenPair {
   accessToken: string;
   refreshToken: string;
 }
+
+// Add to existing types
+export type ProjectStatus =
+  | 'new'
+  | 'requirement-gathering'
+  | 'planning'
+  | 'execution'
+  | 'monitoring-and-control'
+  | 'close'
+  | 'block'
+  | 'wont-done';

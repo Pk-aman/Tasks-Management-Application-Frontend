@@ -214,7 +214,7 @@ export const Login = () => {
           </form>
 
 
-          <Divider className="my-6">
+          {/* <Divider className="my-6">
             <Typography variant="body2" className="text-gray-400">
               or
             </Typography>
@@ -228,7 +228,7 @@ export const Login = () => {
             >
               Sign Up
             </Link>
-          </Typography>
+          </Typography> */}
         </div>
       </div>
 

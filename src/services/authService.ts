@@ -6,6 +6,7 @@ import type {
   LoginCredentials,
   ResetPasswordData,
   UserResponse,
+  User,
 } from '../utils';
 
 export const authService = {
@@ -18,18 +19,20 @@ export const authService = {
   },
 
   /**
-   * Signup with OTP verification
+   * Signup without OTP (Admin creates user directly)
    */
   signup: async (
     name: string,
     email: string,
     password: string,
-    otp: string
+    role: 'admin' | 'user'
   ): Promise<ApiResponse> => {
-    const data: SignupData = { name, email, password, otp };
+    const data = { name, email, password, role };
     const response = await axiosInstance.post<ApiResponse>('/auth/signup', data);
     return response.data;
   },
+
+
 
   /**
    * Login user
@@ -95,6 +98,15 @@ export const authService = {
    */
   getCurrentUser: async (): Promise<UserResponse> => {
     const response = await axiosInstance.get<UserResponse>('/auth/me');
+    return response.data;
+  },
+
+
+  /**
+   * Get all users (Admin only)
+   */
+  getAllUsers: async (): Promise<{ success: boolean; users: User[] }> => {
+    const response = await axiosInstance.get('/auth/users');
     return response.data;
   },
 };

@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/auth/Login';
-import { Signup } from './pages/auth/Signup';
+import { Registration } from './pages/Registration';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
+import { ProjectDetail } from './pages/ProjectDetail';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RoleBasedRoute } from './components/RoleBasedRoute';
 import { useAuthStore } from './store/authStore';
@@ -13,17 +14,11 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes - Only accessible when NOT logged in */}
+        {/* Public Routes */}
         <Route
           path="/login"
           element={
             isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />
           }
         />
         <Route
@@ -33,7 +28,7 @@ function App() {
           }
         />
 
-        {/* Protected Routes - Only accessible when logged in */}
+        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
@@ -43,12 +38,22 @@ function App() {
           }
         />
 
-        {/* Example: Admin-only route */}
+        {/* Project Detail Page */}
         <Route
-          path="/admin"
+          path="/projects/:id"
+          element={
+            <ProtectedRoute>
+              <ProjectDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin-only route */}
+        <Route
+          path="/registration"
           element={
             <RoleBasedRoute allowedRoles={['admin']}>
-              <div>Admin Page - Only for admins</div>
+              <Registration />
             </RoleBasedRoute>
           }
         />
@@ -57,15 +62,15 @@ function App() {
         <Route
           path="/"
           element={
-            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+            <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />
           }
         />
 
-        {/* 404 - Redirect to appropriate page */}
+        {/* 404 */}
         <Route
           path="*"
           element={
-            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+            <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />
           }
         />
       </Routes>
