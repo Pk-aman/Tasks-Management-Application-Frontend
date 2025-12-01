@@ -7,7 +7,7 @@
 import type { UserRole } from "./types";
 
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   role: UserRole;
@@ -151,9 +151,9 @@ export interface SignupData {
 
 // Comment interface - updated to match backend
 export interface Comment {
-  id?: string;
+  _id?: string;
   text: string;
-  sentBy: string | User; // Changed from 'user' to 'sentBy'
+  sentBy: User; // Changed from 'user' to 'sentBy'
   project?: string;
   task?: string;
   createdAt: string;
@@ -162,18 +162,18 @@ export interface Comment {
 
 // Project interface
 export interface Project {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   acceptanceCriteria: string;
-  members: Array<string | User>;
+  members: Array< User>;
   deadline: string;
   clientDetails?: string;
   status: ProjectStatus;
   comments?: Comment[];
   commentCount?: number; // Add comment count
-  assignee: string | User;
-  createdBy: string | User;
+  assignee: User;
+  createdBy: User;
   createdAt: string;
   updatedAt: string;
 }
@@ -189,7 +189,6 @@ export interface CreateProjectData {
   clientDetails?: string;
   status: ProjectStatus;
   assignee: string;
-  // comments removed - will be added separately via API
 }
 
 // Add AddCommentData interface
@@ -207,18 +206,6 @@ export type ProjectStatus =
   | 'close'
   | 'block'
   | 'wont-done';
-
-export interface CreateProjectData {
-  title: string;
-  description: string;
-  acceptanceCriteria: string;
-  members: string[];
-  deadline: string;
-  clientDetails?: string;
-  status: ProjectStatus;
-  comments: string;
-  assignee: string;
-}
 
 export interface ProjectFormState {
   title: string;
@@ -243,4 +230,63 @@ export interface DashboardStats {
     count: number;
   }[];
 }
+
+// Add Task Status type
+export type TaskStatus = 
+  | 'new'
+  | 'todo'
+  | 'inprogress'
+  | 'testing'
+  | 'done'
+  | 'block'
+  | 'wont-done';
+
+// Task interface
+export interface Task {
+  _id: string;
+  title: string;
+  description: string;
+  acceptanceCriteria: string;
+  project: Project;
+  parentTask?: Task | null;
+  members: Array<User>;
+  deadline: string;
+  status: TaskStatus;
+  assignee: User;
+  createdBy: User;
+  comments?: Comment[];
+  subtasks?: Task[];
+  subtaskCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Create Task Data
+export interface CreateTaskData {
+  title: string;
+  description: string;
+  acceptanceCriteria: string;
+  project: string;
+  parentTask?: string | null;
+  members: string[];
+  deadline: string;
+  status?: TaskStatus;
+  assignee: string;
+}
+
+export interface FilterOption {
+  _id: string;  // ✅ Changed from 'id' to '_id'
+  name: string;
+  label?: string;
+}
+
+export interface MultiSelectFilterProps {
+  label: string;
+  options: FilterOption[];
+  selectedIds: string[];
+  onChange: (selectedIds: string[]) => void;
+  getOptionAvatar?: (option: FilterOption) => string;
+  defaultSelectAll?: boolean;
+}
+
 

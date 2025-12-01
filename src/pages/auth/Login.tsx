@@ -27,7 +27,6 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -150,7 +149,7 @@ export const Login = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <FormControlLabel
+              {/* <FormControlLabel
                 control={
                   <Checkbox
                     checked={rememberMe}
@@ -168,7 +167,7 @@ export const Login = () => {
                     Remember me
                   </Typography>
                 }
-              />
+              /> */}
               <Link
                 to="/forgot-password"
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"

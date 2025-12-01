@@ -31,6 +31,11 @@ export type {
     ProjectFormState,
     DashboardStats,
     Comment,
-    AddCommentData
+    AddCommentData,
+    Task,
+    CreateTaskData,
+    TaskStatus,
+    MultiSelectFilterProps,
+    FilterOption
   } from './interfaces';
   

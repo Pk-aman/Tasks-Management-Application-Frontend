@@ -43,7 +43,7 @@ export const ProjectStats = ({ stats }: ProjectStatsProps) => {
       bgColor: '#FEF2F2',
     },
     {
-      title: 'Team Members',
+      title: 'Total Members',
       value: stats.totalMembers,
       icon: <GroupOutlined sx={{ fontSize: 40 }} />,
       color: '#F59E0B',

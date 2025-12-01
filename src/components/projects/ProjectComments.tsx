@@ -4,7 +4,6 @@ import {
   TextField,
   Button,
   Typography,
-  Avatar,
   IconButton,
   Paper,
   Divider,
@@ -13,6 +12,7 @@ import { SendOutlined, DeleteOutlined } from '@mui/icons-material';
 import { format, isValid, parseISO } from 'date-fns';
 import type { Comment, User } from '../../utils';
 import { useAuthStore } from '../../store/authStore';
+import { ProfileAvatar } from '../common/ProfileAvatar';
 
 interface ProjectCommentsProps {
   comments: Comment[];
@@ -60,18 +60,9 @@ export const ProjectComments = ({
     return user?.name || 'Unknown User';
   };
 
-  const getUserInitials = (user: string | User) => {
-    const name = getUserName(user);
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
-    }
-    return name.charAt(0).toUpperCase();
-  };
-
   const getUserId = (user: string | User) => {
     if (typeof user === 'string') return user;
-    return user?.id || '';
+    return user?._id || '';
   };
   const formatDate = (dateString: string) => {
     try {
@@ -107,13 +98,11 @@ export const ProjectComments = ({
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {comments.map((comment) => {
-  const commentId = comment.id || '';
+  const commentId = comment._id || '';
   return (
     <Paper key={commentId} sx={{ p: 2, bgcolor: '#F9FAFB' }}>
       <Box display="flex" gap={2}>
-        <Avatar sx={{ bgcolor: '#10B981', width: 36, height: 36 }}>
-          {getUserInitials(comment.sentBy)}
-        </Avatar>
+        <ProfileAvatar sx={{ bgcolor: '#10B981', width: 36, height: 36 }} name={comment.sentBy.name}/>
         <Box flex={1}>
           <Box display="flex" justifyContent="space-between" alignItems="start">
             <Box>
@@ -124,7 +113,7 @@ export const ProjectComments = ({
                 {formatDate(comment.createdAt)}
               </Typography>
             </Box>
-            {(getUserId(comment.sentBy) === currentUser?.id ||
+            {(getUserId(comment.sentBy) === currentUser?._id ||
               currentUser?.role === 'admin') && (
               <IconButton
                 size="small"
@@ -152,9 +141,7 @@ export const ProjectComments = ({
       {/* Add Comment Form */}
       <form onSubmit={handleSubmit}>
         <Box display="flex" gap={1}>
-          <Avatar sx={{ bgcolor: '#10B981', width: 36, height: 36 }}>
-            {currentUser?.name?.charAt(0).toUpperCase()}
-          </Avatar>
+          <ProfileAvatar sx={{ bgcolor: '#10B981', width: 36, height: 36 }} name={currentUser?.name}/>
           <TextField
             fullWidth
             multiline

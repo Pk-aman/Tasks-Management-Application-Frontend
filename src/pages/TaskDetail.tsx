@@ -23,105 +23,76 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { useAuthStore } from "../store/authStore";
-import { projectService } from "../services/projectService";
 import { taskService } from "../services/taskService";
-import { ProjectModal } from "../components/projects/ProjectModal";
 import { CreateTaskModal } from "../components/tasks/TaskModal";
 import { TaskCard } from "../components/tasks/TaskCard";
 import { ProjectComments } from "../components/projects/ProjectComments";
-import type { Project, Task, ApiError, ProjectStatus, User } from "../utils";
-import { MemberSelect } from "../components/common/MemberSelect";
+import type { Task, ApiError, TaskStatus } from "../utils";
 import { ProfileAvatar } from "../components/common/ProfileAvatar";
 
 const STATUS_COLORS: Record<
-  ProjectStatus,
+  TaskStatus,
   "default" | "primary" | "secondary" | "error" | "warning" | "info" | "success"
 > = {
   new: "info",
-  "requirement-gathering": "primary",
-  planning: "secondary",
-  execution: "warning",
-  "monitoring-and-control": "primary",
-  close: "success",
+  todo: "default",
+  inprogress: "warning",
+  testing: "secondary",
+  done: "success",
   block: "error",
   "wont-done": "default",
 };
 
-export const ProjectDetail = () => {
+export const TaskDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
+  const [createSubtaskModalOpen, setCreateSubtaskModalOpen] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
-  const isAdmin = user?.role === "admin";
+  const isSubtask = task?.parentTask !== null && task?.parentTask !== undefined;
 
   useEffect(() => {
     if (id) {
-      fetchProject();
-      fetchTasks();
+      fetchTask();
     }
   }, [id]);
 
-  useEffect(() => {
-    filterTasks();
-  }, [selectedMembers]);
-
-  const filterTasks = () => {
-    if (selectedMembers.length > 0) {
-      const filteredTasks = tasks.filter((task: Task) => {
-        const assigneeId = task.assignee?._id;
-        return assigneeId && selectedMembers.includes(assigneeId);
-      });
-      setTasks(filteredTasks);
-      return;
-    }
-    fetchTasks();
-  };
-
-  const fetchProject = async () => {
+  const fetchTask = async () => {
     if (!id) return;
 
     setLoading(true);
     try {
-      const response = await projectService.getProjectById(id);
-      setProject(response.project);
+      const response = await taskService.getTaskById(id);
+      setTask(response.task);
     } catch (err) {
       const apiError = err as ApiError;
-      setError(apiError.response?.data?.message || "Failed to fetch project");
+      setError(apiError.response?.data?.message || "Failed to fetch task");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchTasks = async () => {
-    if (!id) return;
-
-    try {
-      const response = await taskService.getTasksByProject(id);
-      setTasks(response.tasks || []);
-    } catch (err) {
-      console.error("Failed to fetch tasks:", err);
-    }
-  };
-
   const handleDelete = async () => {
-    if (!id || !project) return;
+    if (!id || !task) return;
 
-    if (window.confirm(`Are you sure you want to delete "${project.title}"?`)) {
+    if (window.confirm(`Are you sure you want to delete "${task.title}"?`)) {
       try {
-        await projectService.deleteProject(id);
-        navigate("/dashboard");
+        await taskService.deleteTask(id);
+        const projectId =
+          typeof task.project === "string" ? task.project : task.project?._id;
+        if (projectId) {
+          navigate(`/projects/${projectId}`);
+        } else {
+          navigate("/dashboard");
+        }
       } catch (err) {
         const apiError = err as ApiError;
-        setError(
-          apiError.response?.data?.message || "Failed to delete project"
-        );
+        setError(apiError.response?.data?.message || "Failed to delete task");
       }
     }
   };
@@ -130,8 +101,8 @@ export const ProjectDetail = () => {
     if (!id) return;
 
     try {
-      const response = await projectService.addComment(id, { text });
-      setProject(response.project);
+      const response = await taskService.addComment(id, { text });
+      setTask(response.task);
       setError("");
     } catch (err) {
       const apiError = err as ApiError;
@@ -144,8 +115,8 @@ export const ProjectDetail = () => {
     if (!id) return;
 
     try {
-      const response = await projectService.deleteComment(id, commentId);
-      setProject(response.project);
+      const response = await taskService.deleteComment(id, commentId);
+      setTask(response.task);
     } catch (err) {
       const apiError = err as ApiError;
       setError(apiError.response?.data?.message || "Failed to delete comment");
@@ -153,11 +124,17 @@ export const ProjectDetail = () => {
     }
   };
 
-  const getStatusLabel = (status: ProjectStatus) => {
-    return status
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+  const getStatusLabel = (status: TaskStatus) => {
+    const labels: Record<TaskStatus, string> = {
+      new: "New",
+      todo: "To Do",
+      inprogress: "In Progress",
+      testing: "Testing",
+      done: "Done",
+      block: "Block",
+      "wont-done": "Won't Done",
+    };
+    return labels[status];
   };
 
   const getUserName = (user: any) => {
@@ -165,31 +142,62 @@ export const ProjectDetail = () => {
     return user?.name || "Unknown";
   };
 
-  const canUserCreateTask = () => {
-    if (!project || !user) return false;
+  const getProjectTitle = () => {
+    if (!task?.project) return "Unknown Project";
+    if (typeof task.project === "string") return "Project";
+    return task.project.title || "Unknown Project";
+  };
 
-    // Admin can create tasks
+  const getProjectId = () => {
+    if (!task?.project) return null;
+    if (typeof task.project === "string") return task.project;
+    return task.project._id;
+  };
+
+  const canUserEditTask = () => {
+    if (!task || !user) return false;
+
+    // Admin can edit all tasks
     if (user.role === "admin") return true;
 
-    // Check if user is project assignee
+    // Check if user is the assignee
     const assigneeId =
-      typeof project.assignee === "string"
-        ? project.assignee
-        : project.assignee?._id;
+      typeof task.assignee === "string" ? task.assignee : task.assignee?._id;
 
     if (assigneeId === user._id) return true;
 
-    // Check if user is project member
-    const isMember = project.members?.some((member: any) => {
+    // Check if user is in task members
+    const isMember = task.members?.some((member: any) => {
       const memberId =
         typeof member === "string" ? member : member.id || member.id;
       return memberId === user._id;
     });
 
-    return isMember;
+    if (isMember) return true;
+
+    // Check if user is project member or assignee
+    const project = task.project;
+    if (project && typeof project === "object") {
+      const projectAssigneeId =
+        typeof project.assignee === "string"
+          ? project.assignee
+          : project.assignee?._id;
+
+      if (projectAssigneeId === user._id) return true;
+
+      const isProjectMember = project.members?.some((member: any) => {
+        const memberId =
+          typeof member === "string" ? member : member.id || member.id;
+        return memberId === user._id;
+      });
+
+      if (isProjectMember) return true;
+    }
+
+    return false;
   };
 
-  const canCreateTask = canUserCreateTask();
+  const canEdit = canUserEditTask();
 
   if (loading) {
     return (
@@ -205,7 +213,7 @@ export const ProjectDetail = () => {
     );
   }
 
-  if (error && !project) {
+  if (error && !task) {
     return (
       <Box
         display="flex"
@@ -230,7 +238,7 @@ export const ProjectDetail = () => {
     );
   }
 
-  if (!project) return null;
+  if (!task) return null;
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F9FAFB" }}>
@@ -253,16 +261,25 @@ export const ProjectDetail = () => {
             justifyContent="space-between"
           >
             <Box display="flex" alignItems="center" gap={2}>
-              <IconButton onClick={() => navigate("/dashboard")}>
+              <IconButton
+                onClick={() => {
+                  const projectId = getProjectId();
+                  if (projectId) {
+                    navigate(`/projects/${projectId}`);
+                  } else {
+                    navigate("/dashboard");
+                  }
+                }}
+              >
                 <ArrowBack />
               </IconButton>
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  Projects / {project.title}
+                  {getProjectTitle()} / {task.title}
                 </Typography>
               </Box>
             </Box>
-            {isAdmin && (
+            {canEdit && (
               <Box display="flex" gap={2}>
                 <Button
                   variant="outlined"
@@ -297,21 +314,15 @@ export const ProjectDetail = () => {
         <Grid container spacing={3}>
           {/* Left Column - Main Content */}
           <Grid size={{ xs: 12, lg: 8 }}>
-            {/* Project Title and Status */}
+            {/* Task Title and Status */}
             <Box mb={3}>
-              <Box
-                display="flex"
-                alignItems="center"
-                gap={2}
-                mb={2}
-                justifyContent="space-between"
-              >
+              <Box display="flex" alignItems="center" gap={2} mb={2}>
                 <Typography variant="h4" fontWeight="bold">
-                  {project.title}
+                  {task.title}
                 </Typography>
                 <Chip
-                  label={getStatusLabel(project.status)}
-                  color={STATUS_COLORS[project.status]}
+                  label={getStatusLabel(task.status)}
+                  color={STATUS_COLORS[task.status]}
                   size="small"
                 />
               </Box>
@@ -327,7 +338,7 @@ export const ProjectDetail = () => {
                 color="text.secondary"
                 whiteSpace="pre-line"
               >
-                {project.description}
+                {task.description}
               </Typography>
             </Paper>
 
@@ -344,65 +355,55 @@ export const ProjectDetail = () => {
                 color="text.secondary"
                 whiteSpace="pre-line"
               >
-                {project.acceptanceCriteria}
+                {task.acceptanceCriteria}
               </Typography>
             </Paper>
 
-            {/* Tasks Section */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                mb={2}
-              >
-                <Typography variant="subtitle2" fontWeight="bold">
-                  Tasks ({tasks.length})
-                </Typography>
-                <Box display="flex" alignItems="center" mb={2}>
-                  {canCreateTask && (
+            {/* Subtasks Section - Only show if this is a task, not a subtask */}
+            {!isSubtask && (
+              <Paper sx={{ p: 3, mb: 3 }}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  mb={2}
+                >
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    Subtasks ({task.subtasks?.length || 0})
+                  </Typography>
+                  {canEdit && (
                     <Button
                       size="small"
                       startIcon={<AddCircleOutline />}
-                      onClick={() => setCreateTaskModalOpen(true)}
+                      onClick={() => setCreateSubtaskModalOpen(true)}
                       sx={{ textTransform: "none" }}
-                    ></Button>
+                    >
+                      Create Subtask
+                    </Button>
                   )}
-                  {/* Member Select Filter */}
-                  <MemberSelect
-                    label="Members"
-                    options={project.members.map((u) => {
-                      return {
-                        _id: u._id,
-                        name: u.name,
-                        label: u.name,
-                      };
-                    })}
-                    selectedIds={selectedMembers}
-                    onChange={setSelectedMembers}
-                  />
                 </Box>
-              </Box>
-              {tasks.length > 0 ? (
-                <Box>
-                  {tasks.map((task) => (
-                    <TaskCard key={task._id} task={task} />
-                  ))}
-                </Box>
-              ) : (
-                <Box
-                  sx={{
-                    textAlign: "center",
-                    py: 4,
-                    color: "text.secondary",
-                  }}
-                >
-                  <Typography variant="body2">
-                    No tasks created yet. Create your first task to get started.
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
+                {task.subtasks && task.subtasks.length > 0 ? (
+                  <Box>
+                    {task.subtasks.map((subtask) => (
+                      <TaskCard key={subtask._id} task={subtask} isSubtask />
+                    ))}
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      py: 4,
+                      color: "text.secondary",
+                    }}
+                  >
+                    <Typography variant="body2">
+                      No subtasks created yet. Break down this task into smaller
+                      subtasks.
+                    </Typography>
+                  </Box>
+                )}
+              </Paper>
+            )}
 
             {/* Comments Section */}
             <Paper sx={{ p: 3 }}>
@@ -410,7 +411,7 @@ export const ProjectDetail = () => {
                 Activity
               </Typography>
               <ProjectComments
-                comments={project.comments || []}
+                comments={task.comments || []}
                 onAddComment={handleAddComment}
                 onDeleteComment={handleDeleteComment}
               />
@@ -441,10 +442,10 @@ export const ProjectDetail = () => {
                       height: 32,
                       bgcolor: "#10B981",
                     }}
-                    name={project.assignee.name}
+                    name={task.assignee.name}
                   />
                   <Typography variant="body2" fontWeight="500">
-                    {getUserName(project.assignee)}
+                    {getUserName(task.assignee)}
                   </Typography>
                 </Box>
               </Box>
@@ -468,10 +469,10 @@ export const ProjectDetail = () => {
                       height: 32,
                       bgcolor: "#10B981",
                     }}
-                    name={project.assignee.name}
+                    name={task.assignee.name}
                   />
                   <Typography variant="body2" fontWeight="500">
-                    {getUserName(project.createdBy)}
+                    {getUserName(task.createdBy)}
                   </Typography>
                 </Box>
               </Box>
@@ -491,35 +492,15 @@ export const ProjectDetail = () => {
                 <Box display="flex" alignItems="center" gap={1}>
                   <CalendarTodayOutlined fontSize="small" color="action" />
                   <Typography variant="body2" fontWeight="500">
-                    {format(new Date(project.deadline), "MMMM dd, yyyy")}
+                    {format(new Date(task.deadline), "MMMM dd, yyyy")}
                   </Typography>
                 </Box>
               </Box>
 
               <Divider sx={{ my: 2 }} />
 
-              {/* Client Details */}
-              {project.clientDetails && (
-                <>
-                  <Box mb={3}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      display="block"
-                      mb={1}
-                    >
-                      Client
-                    </Typography>
-                    <Typography variant="body2" fontWeight="500">
-                      {project.clientDetails}
-                    </Typography>
-                  </Box>
-                  <Divider sx={{ my: 2 }} />
-                </>
-              )}
-
               {/* Team Members */}
-              {project.members && project.members.length > 0 && (
+              {task.members && task.members.length > 0 && (
                 <>
                   <Box mb={3}>
                     <Typography
@@ -528,10 +509,10 @@ export const ProjectDetail = () => {
                       display="block"
                       mb={1.5}
                     >
-                      Team Members ({project.members.length})
+                      Team Members ({task.members.length})
                     </Typography>
                     <Box display="flex" flexDirection="column" gap={1.5}>
-                      {project.members.map((member, index) => (
+                      {task.members.map((member, index) => (
                         <Box
                           key={index}
                           display="flex"
@@ -544,7 +525,7 @@ export const ProjectDetail = () => {
                               height: 32,
                               bgcolor: "#10B981",
                             }}
-                            name={project.assignee.name}
+                            name={task.assignee.name}
                           />
                           <Typography variant="body2" fontWeight="500">
                             {getUserName(member)}
@@ -564,14 +545,14 @@ export const ProjectDetail = () => {
                   color="text.secondary"
                   display="block"
                 >
-                  Created {format(new Date(project.createdAt), "MMM dd, yyyy")}
+                  Created {format(new Date(task.createdAt), "MMM dd, yyyy")}
                 </Typography>
                 <Typography
                   variant="caption"
                   color="text.secondary"
                   display="block"
                 >
-                  Updated {format(new Date(project.updatedAt), "MMM dd, yyyy")}
+                  Updated {format(new Date(task.updatedAt), "MMM dd, yyyy")}
                 </Typography>
               </Box>
             </Paper>
@@ -579,26 +560,29 @@ export const ProjectDetail = () => {
         </Grid>
       </Container>
 
-      {/* Edit Project Modal */}
-      <ProjectModal
+      {/* Edit Task Modal */}
+      <CreateTaskModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         onSuccess={() => {
           setEditModalOpen(false);
-          fetchProject();
+          fetchTask();
         }}
-        project={project}
+        projectId={getProjectId() || ""}
+        parentTaskId={task.parentTask?._id}
+        editTask={task}
       />
 
-      {/* Create Task Modal */}
+      {/* Create Subtask Modal */}
       <CreateTaskModal
-        open={createTaskModalOpen}
-        onClose={() => setCreateTaskModalOpen(false)}
+        open={createSubtaskModalOpen}
+        onClose={() => setCreateSubtaskModalOpen(false)}
         onSuccess={() => {
-          setCreateTaskModalOpen(false);
-          fetchTasks();
+          setCreateSubtaskModalOpen(false);
+          fetchTask();
         }}
-        projectId={id || ""}
+        projectId={getProjectId() || ""}
+        parentTaskId={id || ""}
       />
     </Box>
   );

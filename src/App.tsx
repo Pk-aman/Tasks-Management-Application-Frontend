@@ -4,6 +4,7 @@ import { Registration } from './pages/Registration';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
 import { ProjectDetail } from './pages/ProjectDetail';
+import { TaskDetail } from './pages/TaskDetail';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RoleBasedRoute } from './components/RoleBasedRoute';
 import { useAuthStore } from './store/authStore';
@@ -48,6 +49,16 @@ function App() {
           }
         />
 
+        {/* Task Detail Page */}
+        <Route
+          path="/tasks/:id"
+          element={
+            <ProtectedRoute>
+              <TaskDetail />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin-only route */}
         <Route
           path="/registration"
@@ -66,7 +77,7 @@ function App() {
           }
         />
 
-        {/* 404 */}
+        {/* 404 - Catch all */}
         <Route
           path="*"
           element={

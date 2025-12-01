@@ -4,9 +4,7 @@ import {
   Typography,
   Chip,
   Box,
-  Avatar,
   AvatarGroup,
-  Tooltip,
   CardActionArea,
 } from '@mui/material';
 import {
@@ -15,8 +13,9 @@ import {
   CommentOutlined,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import type { Project } from '../../utils';
+import type { Project, User } from '../../utils';
 import { format } from 'date-fns';
+import { ProfileAvatar } from '../common/ProfileAvatar';
 
 interface ProjectCardProps {
   project: Project;
@@ -46,20 +45,6 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
       .join(' ');
   };
 
-  const getMemberName = (member: any) => {
-    if (typeof member === 'string') return member;
-    return member?.name || 'Unknown';
-  };
-
-  const getMemberInitials = (member: any) => {
-    const name = getMemberName(member);
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
-    }
-    return name.charAt(0).toUpperCase();
-  };
-
   const getAssigneeName = (assignee: any) => {
     if (!assignee) return 'Unassigned';
     if (typeof assignee === 'string') return assignee;
@@ -67,7 +52,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
   };
 
   const handleClick = () => {
-    navigate(`/projects/${project.id }`);
+    navigate(`/projects/${project._id }`);
   };
 
   return (
@@ -118,7 +103,6 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
           </Box>
 
           {/* Comments count */}
-          {/* Comments count */}
           {project.commentCount !== undefined && project.commentCount > 0 && (
             <Box display="flex" alignItems="center" gap={1} mb={2}>
               <CommentOutlined fontSize="small" color="action" />
@@ -140,12 +124,8 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
                 Team Members ({project.members.length}):
               </Typography>
               <AvatarGroup max={4} sx={{ justifyContent: 'flex-start' }}>
-                {project.members.map((member, index) => (
-                  <Tooltip key={index} title={getMemberName(member)}>
-                    <Avatar sx={{ width: 32, height: 32, fontSize: '0.875rem' }}>
-                      {getMemberInitials(member)}
-                    </Avatar>
-                  </Tooltip>
+                {project.members.map((member: User) => (
+                  <ProfileAvatar sx={{ width: 32, height: 32, fontSize: '0.875rem' }} name={member.name} />
                 ))}
               </AvatarGroup>
             </Box>
