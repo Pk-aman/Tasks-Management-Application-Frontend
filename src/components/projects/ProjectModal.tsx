@@ -213,7 +213,7 @@ export const ProjectModal = ({
               multiple
               options={users}
               value={selectedMemberObjects} // ✅ Display User objects
-              onChange={(event, newValue) => {
+              onChange={(_, newValue) => {
                 setFormData({
                   ...formData,
                   members: newValue.map((user) => user._id), // ✅ Store IDs as per interface
@@ -247,7 +247,7 @@ export const ProjectModal = ({
             <Autocomplete
               options={users}
               value={selectedAssignee || null}
-              onChange={(event, newValue) => {
+              onChange={(_, newValue) => {
                 setFormData({
                   ...formData,
                   assignee: newValue?._id || '', // ✅ Store ID as per interface

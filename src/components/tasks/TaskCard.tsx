@@ -4,8 +4,6 @@ import {
   Typography,
   Chip,
   Box,
-  Avatar,
-  Tooltip,
   CardActionArea,
 } from '@mui/material';
 import { SubdirectoryArrowRightOutlined } from '@mui/icons-material';

@@ -279,7 +279,7 @@ export const CreateTaskModal = ({
               multiple
               options={projectMembers}
               value={selectedMemberObjects} // ✅ Display User objects
-              onChange={(event, newValue) => {
+              onChange={(_, newValue) => {
                 setFormData({
                   ...formData,
                   members: newValue.map((user) => user._id), // ✅ Store IDs
@@ -320,7 +320,7 @@ export const CreateTaskModal = ({
             <Autocomplete
               options={projectMembers}
               value={selectedAssignee || null}
-              onChange={(event, newValue) => {
+              onChange={(_, newValue) => {
                 setFormData({
                   ...formData,
                   assignee: newValue?._id || '',

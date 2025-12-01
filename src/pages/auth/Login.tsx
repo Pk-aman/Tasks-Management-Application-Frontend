@@ -6,9 +6,6 @@ import {
   Alert,
   InputAdornment,
   IconButton,
-  Divider,
-  Checkbox,
-  FormControlLabel,
 } from '@mui/material';
 import {
   Visibility,

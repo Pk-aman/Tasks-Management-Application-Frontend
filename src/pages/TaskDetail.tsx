@@ -52,7 +52,6 @@ export const TaskDetail = () => {
   const [error, setError] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [createSubtaskModalOpen, setCreateSubtaskModalOpen] = useState(false);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
   const isSubtask = task?.parentTask !== null && task?.parentTask !== undefined;
 

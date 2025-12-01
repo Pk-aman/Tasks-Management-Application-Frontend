@@ -29,7 +29,7 @@ import { ProjectModal } from "../components/projects/ProjectModal";
 import { CreateTaskModal } from "../components/tasks/TaskModal";
 import { TaskCard } from "../components/tasks/TaskCard";
 import { ProjectComments } from "../components/projects/ProjectComments";
-import type { Project, Task, ApiError, ProjectStatus, User } from "../utils";
+import type { Project, Task, ApiError, ProjectStatus } from "../utils";
 import { MemberSelect } from "../components/common/MemberSelect";
 import { ProfileAvatar } from "../components/common/ProfileAvatar";
 

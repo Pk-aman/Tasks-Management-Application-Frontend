@@ -2,7 +2,6 @@ import axiosInstance from '../api/axiosInstance';
 import type {
   AuthResponse,
   ApiResponse,
-  SignupData,
   LoginCredentials,
   ResetPasswordData,
   UserResponse,
